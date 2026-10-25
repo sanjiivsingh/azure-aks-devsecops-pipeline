@@ -34,7 +34,7 @@ jobs:
       - name: Run Pytest
         run: |
           cd app
-          pytest -v tests/
+          PYTHONPATH=. pytest -v tests/
 
   iac-security:
     name: "IaC Security (Checkov & tfsec)"
@@ -96,9 +96,9 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Validate Kubernetes Manifests (Dry Run)
+      - name: Validate Kubernetes Manifests
         run: |
-          # Verify YAML syntax
+          pip install pyyaml
           python3 -c "
           import yaml, glob
           for f in sorted(glob.glob('k8s/*.yaml')):
