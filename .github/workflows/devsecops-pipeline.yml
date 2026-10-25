@@ -1,0 +1,108 @@
+name: "End-to-End DevSecOps Pipeline"
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  unit-tests:
+    name: "Application Unit Tests & Lint"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r app/requirements.txt
+
+      - name: Run Pytest
+        run: |
+          cd app
+          pytest -v tests/
+
+  iac-security:
+    name: "IaC Security (Checkov & tfsec)"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9.0"
+
+      - name: Terraform Format Check
+        run: terraform -chdir=terraform fmt -check
+
+      - name: Checkov IaC Security Scan
+        uses: bridgecrewio/checkov-action@master
+        with:
+          directory: terraform
+          framework: terraform
+          soft_fail: true
+
+      - name: tfsec Security Scanner
+        uses: aquasecurity/tfsec-action@v1.0.3
+        with:
+          working_directory: terraform
+          soft_fail: true
+
+  container-security:
+    name: "Container Build & Trivy Vulnerability Scan"
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Local Image
+        run: |
+          docker build -t cloud-microservice:${{ github.sha }} ./app
+
+      - name: Run Trivy Vulnerability Scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: "cloud-microservice:${{ github.sha }}"
+          format: "table"
+          exit-code: "0"
+          ignore-unfixed: true
+          vuln-type: "os,library"
+          severity: "CRITICAL,HIGH"
+
+  k8s-manifest-validation:
+    name: "Kubernetes Manifest Quality Check"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Validate Kubernetes Manifests (Dry Run)
+        run: |
+          # Verify YAML syntax
+          python3 -c "
+          import yaml, glob
+          for f in sorted(glob.glob('k8s/*.yaml')):
+              with open(f) as stream:
+                  list(yaml.safe_load_all(stream))
+                  print(f'Valid YAML: {f}')
+          "

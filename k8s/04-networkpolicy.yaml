@@ -1,0 +1,28 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: cloud-microservice-netpol
+  namespace: production
+spec:
+  podSelector:
+    matchLabels:
+      app: cloud-microservice
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector: {}
+      ports:
+        - protocol: TCP
+          port: 8000
+  egress:
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: UDP
+          port: 53 # CoreDNS
+        - protocol: TCP
+          port: 53 # CoreDNS
+        - protocol: TCP
+          port: 443 # External HTTPS
