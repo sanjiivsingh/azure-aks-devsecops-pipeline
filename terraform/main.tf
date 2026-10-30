@@ -37,17 +37,18 @@ resource "azurerm_kubernetes_cluster" "aks" {
   dns_prefix          = "${var.prefix}-k8s"
   kubernetes_version  = var.kubernetes_version
 
+  azure_policy_enabled = true
+
   default_node_pool {
-    name                = "system"
-    node_count          = var.node_count
-    vm_size             = var.vm_size
-    vnet_subnet_id      = azurerm_subnet.aks_subnet.id
-    enable_auto_scaling = true
-    min_count           = 1
-    max_count           = 3
-    type                = "VirtualMachineScaleSets"
-    os_disk_size_gb     = 50
-    tags                = var.tags
+    name                 = "system"
+    node_count           = var.node_count
+    vm_size              = var.vm_size
+    vnet_subnet_id       = azurerm_subnet.aks_subnet.id
+    auto_scaling_enabled = true
+    min_count            = 1
+    max_count            = 3
+    os_disk_size_gb      = 50
+    tags                 = var.tags
   }
 
   identity {
@@ -56,7 +57,12 @@ resource "azurerm_kubernetes_cluster" "aks" {
 
   network_profile {
     network_plugin    = "azure"
+    network_policy    = "azure"
     load_balancer_sku = "standard"
+  }
+
+  key_vault_secrets_provider {
+    secret_rotation_enabled = true
   }
 
   tags = var.tags
@@ -78,7 +84,9 @@ resource "azurerm_key_vault" "kv" {
   soft_delete_retention_days  = 90
   purge_protection_enabled    = true
   sku_name                    = "standard"
-  enable_rbac_authorization   = true
+  rbac_authorization_enabled  = true
+
+  public_network_access_enabled = false
 
   network_acls {
     bypass         = "AzureServices"
