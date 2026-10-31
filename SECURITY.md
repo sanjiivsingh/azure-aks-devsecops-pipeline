@@ -6,3 +6,4 @@ Please report security issues responsibly via:
 * **Direct Contact:** [https://github.com/sanjiivsingh](https://github.com/sanjiivsingh)
 
 We will respond within 48 hours.
+

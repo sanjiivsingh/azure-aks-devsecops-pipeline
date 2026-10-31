@@ -50,3 +50,4 @@ Success! The configuration is valid.
 | **Azure Key Vault** | Standard SKU (RBAC enabled) | ~$0.03 |
 | **Virtual Network & Subnet** | 10.240.0.0/16 | Free |
 | **Total Base Monthly Est.** | | **~$160.19 / month** |
+

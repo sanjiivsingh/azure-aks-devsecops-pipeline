@@ -24,3 +24,4 @@ Implement a 5-tier progressive verification pipeline:
 3. **IaC SAST:** Parallel Checkov and tfsec analysis on Terraform code.
 4. **Container CVEs:** Trivy vulnerability scan against built container layers.
 5. **K8s Quality:** YAML schema parsing and manifest validation.
+
